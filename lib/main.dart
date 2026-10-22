@@ -7,6 +7,7 @@ import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/quiz_screen.dart';
 import 'screens/result_screen.dart';
+import 'screens/review_screen.dart';
 
 void main() {
   runApp(const GrandLineQuestApp());
@@ -39,6 +40,10 @@ class GrandLineQuestApp extends StatelessWidget {
               AppRoutes.result: (context) =>
                   context.read<QuizProvider>().isFinished
                       ? const ResultScreen()
+                      : const HomeScreen(),
+              AppRoutes.review: (context) =>
+                  context.read<QuizProvider>().isFinished
+                      ? const ReviewScreen()
                       : const HomeScreen(),
             },
           );
