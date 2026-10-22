@@ -57,7 +57,7 @@ class QuestionBank {
     ),
     Question(
       text: 'Siapa yang mempercayakan topi jerami kepada Luffy?',
-      options: ['Gol D. Roger', 'Shanks', 'Monkey D. Garp', 'Dragon'],
+      options: ['Gold Roger', 'Shanks', 'Monkey D. Garp', 'Dragon'],
       correctIndex: 1,
       explanation: 'Shanks "Si Rambut Merah (Akagami)" menitipkan topinya dengan syarat Luffy mengembalikannya setelah menjadi bajak laut hebat.',
     ),
