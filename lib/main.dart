@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/quiz_screen.dart';
 
 void main() {
   runApp(const GrandLineQuestApp());
@@ -32,6 +32,9 @@ class GrandLineQuestApp extends StatelessWidget {
             initialRoute: AppRoutes.home,
             routes: {
               AppRoutes.home: (_) => const HomeScreen(),
+              AppRoutes.quiz: (context) => context.read<QuizProvider>().hasQuiz
+                  ? const QuizScreen()
+                  : const HomeScreen(),
             },
           );
         },

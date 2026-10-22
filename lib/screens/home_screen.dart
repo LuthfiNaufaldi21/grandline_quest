@@ -5,8 +5,11 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_text.dart';
 import '../core/utils/responsive.dart';
 import '../providers/quiz_provider.dart';
-import '../providers/theme_provider.dart';
+import '../widgets/pirate_button.dart';
+import '../widgets/pirate_card.dart';
+import '../widgets/pirate_scaffold.dart';
 
+/// Halaman awal: pemain memasukkan nama sebelum memulai kuis.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Jika pemain kembali ke halaman ini, nama sebelumnya terisi otomatis.
     _nameController.text = context.read<QuizProvider>().playerName;
   }
 
@@ -30,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  /// Mulai kuis baru (soal diacak ulang), lalu pindah ke halaman kuis.
   void _startQuiz() {
     final name = _nameController.text.trim();
 
@@ -41,148 +46,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() => _errorText = null);
-    final quiz = context.read<QuizProvider>()..startQuiz(name);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Ahoy, ${quiz.playerName}! ${quiz.total} soal siap. '
-            'Halaman kuis menyusul di langkah berikutnya.',
-          ),
-        ),
-      );
+    context.read<QuizProvider>().startQuiz(name);
+    Navigator.pushNamed(context, AppRoutes.quiz);
   }
+
+  /// Lanjutkan kuis yang sedang berjalan tanpa mengubah progres.
+  void _continueQuiz() => Navigator.pushNamed(context, AppRoutes.quiz);
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = context.watch<ThemeProvider>().isDark;
+    final quiz = context.watch<QuizProvider>();
 
-    return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark ? AppColors.darkGradient : AppColors.lightGradient,
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Padding(
-                        padding: EdgeInsets.all(context.sz(5)),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: Breakpoints.narrowMaxWidth,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildHeader(context, scheme),
-                                SizedBox(height: context.sz(6)),
-                                _buildFormCard(context, scheme, isDark),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              Positioned(
-                top: context.sz(1),
-                right: context.sz(2),
-                child: IconButton(
-                  tooltip: isDark ? 'Mode siang' : 'Mode malam',
-                  onPressed: () => context.read<ThemeProvider>().toggle(),
-                  iconSize: context.sz(7),
-                  color: scheme.onSurface,
-                  icon: Icon(
-                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ColorScheme scheme) {
-    return Column(
-      children: [
-        Image.asset(
-          AppAssets.logo,
-          width: context.sz(30),
-          height: context.sz(30),
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Icon(
-            Icons.directions_boat_rounded,
-            size: context.sz(26),
-            color: scheme.primary,
-          ),
-        ),
-        SizedBox(height: context.sz(2)),
-        Text(
-          AppConfig.appName,
-          textAlign: TextAlign.center,
-          style: AppText.heading(context, size: 13).copyWith(
-            shadows: [
-              Shadow(
-                color: Colors.black26,
-                blurRadius: context.sz(1.5),
-                offset: Offset(0, context.sz(0.5)),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: context.sz(1.5)),
-        Text(
-          AppConfig.tagline.toUpperCase(),
-          textAlign: TextAlign.center,
-          style: AppText.body(context, size: 3.4, weight: FontWeight.w600)
-              .copyWith(letterSpacing: context.sz(0.6)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFormCard(BuildContext context, ColorScheme scheme, bool isDark) {
-    final errorColor = isDark ? Colors.red.shade200 : AppColors.luffyRed;
-
-    return Container(
-      padding: EdgeInsets.all(context.sz(5)),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(context.sz(4)),
-        border: Border.all(
-          color: isDark ? AppColors.strawYellow : AppColors.parchmentDark,
-          width: context.sz(0.8),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: context.sz(4),
-            offset: Offset(0, context.sz(1.5)),
-          ),
+    return PirateScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Header(),
+          SizedBox(height: context.sz(6)),
+          _buildForm(context, quiz),
         ],
       ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, QuizProvider quiz) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final errorColor = isDark ? Colors.red.shade200 : AppColors.luffyRed;
+
+    return PirateCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -237,25 +130,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SizedBox(height: context.sz(4)),
-          FilledButton.icon(
-            onPressed: _startQuiz,
-            icon: Icon(Icons.directions_boat_rounded, size: context.sz(6)),
-            label: const Text('Mulai Berlayar'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.strawYellow,
-              foregroundColor: AppColors.ink,
-              padding: EdgeInsets.symmetric(vertical: context.sz(3.5)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(context.sz(3)),
-              ),
-              textStyle: AppText.body(
-                context,
-                size: 4.4,
-                weight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
+          if (quiz.isInProgress) ...[
+            PirateButton(
+              label: 'Lanjutkan (${quiz.answeredCount}/${quiz.total} terjawab)',
+              icon: Icons.play_arrow_rounded,
+              onPressed: _continueQuiz,
             ),
-          ),
+            SizedBox(height: context.sz(2.5)),
+            PirateButton(
+              label: 'Mulai Baru',
+              icon: Icons.refresh_rounded,
+              outlined: true,
+              onPressed: _startQuiz,
+            ),
+          ] else
+            PirateButton(
+              label: 'Mulai Berlayar',
+              icon: Icons.directions_boat_rounded,
+              onPressed: _startQuiz,
+            ),
           SizedBox(height: context.sz(2.5)),
           Text(
             '${AppConfig.questionsPerRound} soal acak seputar One Piece',
@@ -275,6 +168,53 @@ class _HomeScreenState extends State<HomeScreen> {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(context.sz(3)),
       borderSide: BorderSide(color: color, width: context.sz(0.6)),
+    );
+  }
+}
+
+/// Logo, judul, dan tagline aplikasi.
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        Image.asset(
+          AppAssets.logo,
+          width: context.sz(30),
+          height: context.sz(30),
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Icon(
+            Icons.directions_boat_rounded,
+            size: context.sz(26),
+            color: scheme.primary,
+          ),
+        ),
+        SizedBox(height: context.sz(2)),
+        Text(
+          AppConfig.appName,
+          textAlign: TextAlign.center,
+          style: AppText.heading(context, size: 13).copyWith(
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                blurRadius: context.sz(1.5),
+                offset: Offset(0, context.sz(0.5)),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: context.sz(1.5)),
+        Text(
+          AppConfig.tagline.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: AppText.body(context, size: 3.4, weight: FontWeight.w600)
+              .copyWith(letterSpacing: context.sz(0.6)),
+        ),
+      ],
     );
   }
 }
